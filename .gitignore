@@ -1,0 +1,20 @@
+# deps
+node_modules
+.next
+out
+dist
+
+# env
+.env
+.env*.local
+
+# drizzle
+.drizzle
+
+# uploads (local dev only, production uses R2)
+public/uploads/audio
+public/uploads/covers
+
+# os
+.DS_Store
+*.pem
