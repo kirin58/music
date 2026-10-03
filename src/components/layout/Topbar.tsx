@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
 
 export function Topbar() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [q, setQ] = useState("");
 
   return (
@@ -51,9 +53,30 @@ export function Topbar() {
         <Link href="/upload" className="btn-ghost hidden sm:inline-block">
           โพสต์เพลง
         </Link>
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-surface-hover text-sm font-bold">
-          G
-        </span>
+        {status === "loading" ? (
+          <span className="h-9 w-9 animate-pulse rounded-full bg-surface-hover" />
+        ) : session?.user ? (
+          <div className="flex items-center gap-2">
+            <span
+              className="grid h-9 w-9 place-items-center rounded-full bg-brand text-sm font-bold text-black"
+              title={session.user.email ?? ""}
+            >
+              {(session.user.name ?? session.user.email ?? "U")[0].toUpperCase()}
+            </span>
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="grid h-9 w-9 place-items-center rounded-full bg-surface-raised text-zinc-400 hover:text-white"
+              title="ออกจากระบบ"
+              aria-label="sign-out"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        ) : (
+          <Link href="/login" className="btn-brand">
+            เข้าสู่ระบบ
+          </Link>
+        )}
       </div>
     </header>
   );

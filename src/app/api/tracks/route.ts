@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { tracks } from "@/lib/schema";
 import { desc, like, or, sql } from "drizzle-orm";
 import { uid } from "@/lib/utils";
+import { getUserId } from "@/lib/current-user";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -38,9 +39,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const userId = await getUserId();
+  if (!userId) return NextResponse.json({ error: "ล็อกอินก่อนโพสต์เพลง" }, { status: 401 });
   try {
     const body = await req.json();
-    const { title, artist, album, genre, coverUrl, audioUrl, duration } = body;
+    const { title, artist, album, genre, coverUrl, audioUrl, duration, source, youtubeId, spotifyId } = body;
     if (!title || !artist || !audioUrl) {
       return NextResponse.json({ error: "title, artist, audioUrl จำเป็น" }, { status: 400 });
     }
@@ -53,18 +56,13 @@ export async function POST(req: NextRequest) {
       genre: genre ? String(genre).slice(0, 50) : null,
       coverUrl: coverUrl ?? null,
       audioUrl: String(audioUrl),
+      source: ["upload", "external", "youtube", "spotify"].includes(source) ? source : "upload",
+      youtubeId: youtubeId ?? null,
+      spotifyId: spotifyId ?? null,
       duration: Number(duration ?? 0),
       plays: 0,
-      userId: process.env.DEMO_USER_ID ?? "demo-user-1"
+      userId
     });
-    // ensure demo user มีอยู่ (ignore ถ้าซ้ำ)
-    try {
-      const { users } = await import("@/lib/schema");
-      await db
-        .insert(users)
-        .values({ id: process.env.DEMO_USER_ID ?? "demo-user-1", name: "Guest", email: "guest@local.dev" })
-        .onConflictDoNothing();
-    } catch {}
     return NextResponse.json({ id }, { status: 201 });
   } catch (e) {
     console.error(e);

@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { playlistTracks } from "@/lib/schema";
+import { getUserId } from "@/lib/current-user";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  if (!(await getUserId())) {
+    return NextResponse.json({ error: "ล็อกอินก่อน" }, { status: 401 });
+  }
   try {
     const { trackId } = await req.json();
     if (!trackId) return NextResponse.json({ error: "trackId จำเป็น" }, { status: 400 });

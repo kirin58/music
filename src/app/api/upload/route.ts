@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPresignedUpload, publicFileUrl } from "@/lib/r2";
+import { getUserId } from "@/lib/current-user";
 
 const AUDIO_TYPES = ["audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav", "audio/ogg", "audio/webm"];
+// mp4 ทั่วไป (music video / เสียงใน container วิดีโอ) อัปโหลดเป็น kind เดียวกับ audio ได้เลย
+const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 const COVER_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 /**
@@ -10,15 +13,18 @@ const COVER_TYPES = ["image/jpeg", "image/png", "image/webp"];
  * client เอา uploadUrl ไป PUT ไฟล์ตรงขึ้น R2
  */
 export async function POST(req: NextRequest) {
+  if (!(await getUserId())) {
+    return NextResponse.json({ error: "ล็อกอินก่อนอัปโหลด" }, { status: 401 });
+  }
   try {
     const { kind, contentType, filename } = await req.json();
     if (kind !== "audio" && kind !== "cover") {
       return NextResponse.json({ error: "kind ต้องเป็น audio หรือ cover" }, { status: 400 });
     }
-    if (kind === "audio" && !AUDIO_TYPES.includes(contentType)) {
+    if (kind === "audio" && !AUDIO_TYPES.includes(contentType) && !VIDEO_TYPES.includes(contentType)) {
       // ปล่อยผ่านแบบเตือน (บาง browser ส่ง audio/x-m4a ฯลฯ)
-      if (!String(contentType).startsWith("audio/")) {
-        return NextResponse.json({ error: `ชนิดไฟล์เสียงไม่รองรับ: ${contentType}` }, { status: 400 });
+      if (!String(contentType).startsWith("audio/") && !String(contentType).startsWith("video/")) {
+        return NextResponse.json({ error: `ชนิดไฟล์ไม่รองรับ: ${contentType} (รับ audio/*, mp4, webm)` }, { status: 400 });
       }
     }
     if (kind === "cover" && !COVER_TYPES.includes(contentType)) {

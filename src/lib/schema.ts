@@ -7,6 +7,8 @@ export const users = sqliteTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   image: text("image"),
+  passwordHash: text("password_hash"),
+  provider: text("provider").default("credentials"), // credentials | google
   createdAt: text("created_at").default(sql`(datetime('now'))`)
 });
 
@@ -18,6 +20,10 @@ export const tracks = sqliteTable("tracks", {
   genre: text("genre"),
   coverUrl: text("cover_url"),
   audioUrl: text("audio_url").notNull(),
+  // ที่มาของเพลง: upload (ไฟล์ขึ้น R2) | external (ลิงก์ mp3 ตรง) | youtube | spotify
+  source: text("source").default("upload"),
+  youtubeId: text("youtube_id"),
+  spotifyId: text("spotify_id"),
   duration: integer("duration").default(0), // วินาที
   plays: integer("plays").default(0),
   userId: text("user_id").references(() => users.id),

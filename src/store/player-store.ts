@@ -9,6 +9,9 @@ export type QueueTrack = {
   audioUrl: string;
   duration?: number | null;
   plays?: number | null;
+  source?: string | null;
+  youtubeId?: string | null;
+  spotifyId?: string | null;
 };
 
 type PlayerState = {

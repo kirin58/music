@@ -68,19 +68,36 @@ src/
     playlist/[id]/            # หน้าเพลย์ลิสต์เดี่ยว
     api/
       tracks/                 # GET list/search, POST create, [id]/play นับยอด
-      upload/                 # ออก presigned URL ขึ้น R2
-      playlists/              # CRUD เพลย์ลิสต์ + เติมเพลง
-      likes/                  # ไลก์ / อันไลก์
+      tracks/import/          # GET preview ลิงก์, POST บันทึกเพลงจากลิงก์ (ต้องล็อกอิน)
+      upload/                 # ออก presigned URL ขึ้น R2 (ต้องล็อกอิน)
+      playlists/              # CRUD เพลย์ลิสต์ + เติมเพลง (ต้องล็อกอิน)
+      likes/                  # ไลก์ / อันไลก์ (ต้องล็อกอิน)
+      auth/[...nextauth]/     # Auth.js: login/logout/session
+      auth/register/          # สมัครสมาชิกด้วยอีเมล
+    login/ + register/        # หน้าล็อกอิน / สมัคร (Google + อีเมล)
   components/
     layout/ Sidebar, Topbar, MobileNav
-    player/ PlayerBar         # <audio> + seek/volume/shuffle/repeat
+    player/ PlayerBar         # <audio> + YouTube API + Spotify embed + seek/volume/shuffle/repeat
     track/  TrackCard, TrackRow
-  store/player-store.ts       # zustand: current/queue/isPlaying
+  store/player-store.ts       # zustand: current/queue/isPlaying (+ source/youtubeId/spotifyId)
   lib/db.ts                   # drizzle + @libsql/client (Turso / file:local.db)
   lib/schema.ts               # schema ฐานข้อมูล
   lib/r2.ts                   # S3 client + presigned URL
+  lib/auth.ts                 # Auth.js v5 (Google + Credentials, JWT)
+  lib/current-user.ts         # getUserId() จาก session
+  lib/import-url.ts           # แยกชนิดลิงก์ YouTube/Spotify/mp3 + oEmbed
   lib/utils.ts                # formatTime/formatPlays/uid
 ```
+
+## ล็อกอิน + นำเข้าลิงก์
+
+- สมัคร/ล็อกอินด้วยอีเมลได้เลย (`AUTH_SECRET` มีแล้ว) โพสต์เพลง/เพลย์ลิสต์/ไลก์ต้องล็อกอินก่อน
+- เปิดปุ่ม Google: สร้าง OAuth client ที่ Google Cloud Console (redirect:
+  `http://localhost:3000/api/auth/callback/google`) ใส่ `AUTH_GOOGLE_ID/SECRET`
+  แล้วตั้ง `NEXT_PUBLIC_GOOGLE_ENABLED="1"` (ดู `.env.example`)
+- แท็บ "วางลิงก์" ในหน้า upload รับ YouTube / Spotify track / ลิงก์ .mp3 ตรง
+  กดตรวจสอบเพื่อดึงชื่อ-ศิลปิน-ปกอัตโนมัติ แล้วบันทึกเป็นเพลงของตัวเอง
+  (YouTube เล่นผ่าน YouTube player, Spotify ผ่าน Spotify embed)
 
 ## ต่อยอด (ยังไม่ทำใน MVP)
 
