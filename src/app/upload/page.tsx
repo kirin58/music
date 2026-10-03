@@ -52,15 +52,25 @@ function FileTab() {
   const [done, setDone] = useState(false);
 
   async function uploadViaPresigned(file: File, kind: "audio" | "cover"): Promise<string> {
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ kind, contentType: file.type, filename: file.name })
-    });
+    let res: Response;
+    try {
+      res = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind, contentType: file.type, filename: file.name })
+      });
+    } catch {
+      throw new Error("ต่อเซิร์ฟเวอร์ไม่ติด (ขั้นขอ upload URL) — เปิดผิด port หรือ dev server ดับ?");
+    }
     if (res.status === 401) throw new Error("ล็อกอินก่อนอัปโหลด");
     if (!res.ok) throw new Error("ขอ upload URL ไม่สำเร็จ (เช็ค env R2_*)");
     const { uploadUrl, fileUrl } = await res.json();
-    const put = await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+    let put: Response;
+    try {
+      put = await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+    } catch {
+      throw new Error("ยิงไฟล์ไป R2 ไม่ถึง (ขั้น PUT) — ไปเพิ่ม CORS Policy ใน bucket Settings ให้อนุญาต PUT จาก localhost");
+    }
     if (!put.ok) throw new Error("อัปโหลดไฟล์ไป R2 ไม่สำเร็จ");
     return fileUrl as string;
   }
